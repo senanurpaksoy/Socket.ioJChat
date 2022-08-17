@@ -135,7 +135,6 @@ public class Multiple2RoomChatLauncher {
             }
         });
 
-
         server.start();
 
         Thread.sleep(Integer.MAX_VALUE);
