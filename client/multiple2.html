@@ -38,7 +38,7 @@
 
     <script src="js/socket.io/socket.io.js"></script>
     <script src="js/moment.min.js"></script>
-    <script src="http://code.jquery.com/jquery-1.10.1.min.js"></script>
+    <script src="js/jquery-1.10.1.min.js"></script>
 
     <script>
         room = 'digerleri';
@@ -49,10 +49,18 @@
 
         socket.on('connect', function () {
             output('<span class="connect-msg">Client has connected to the server!</span>');
+            _defaultRoom();
         });
 
         socket.on('chatevent', function (data) {
+            //Aynı roomdaysa mesaj at
+            /*console.log(`data : ` + data['room']);
+            console.log(`room : ` + room);
+            if(data['room']==room){
             output('<span class="username-msg">' + data.userName + ':</span> ' + data.message);
+            }*/
+            output('<span class="username-msg">' + data.userName + ':</span> ' + data.message);
+
         });
 
         socket.on('disconnect', function () {
@@ -95,12 +103,19 @@
         {
             $('h1#title').text(userName + " => Group: " + room);
             $('head title').text("Group: " + room);
-            /*var jsonObject = {
+
+            var roomChange = {
                 userName: userName,
                 room: room,
-                message: message
             };
-            socket.emit('chatevent', jsonObject);*/
+            socket.emit('roomChange', roomChange);
+
+        }
+
+        function _defaultRoom()
+        {
+            room = 'digerleri';
+            onRoomChange();
         }
     </script>
 </head>

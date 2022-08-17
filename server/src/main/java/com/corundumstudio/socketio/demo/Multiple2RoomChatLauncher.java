@@ -4,7 +4,6 @@ import com.corundumstudio.socketio.*;
 import com.corundumstudio.socketio.listener.ConnectListener;
 import com.corundumstudio.socketio.listener.DataListener;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -12,7 +11,8 @@ public class Multiple2RoomChatLauncher {
 
     public static final String ROOM_DİGERLERİ = "digerleri";
 
-    private HashMap<String, HashSet<SocketIOClient>> rooms = new HashMap<String, HashSet<SocketIOClient>>();
+    private HashMap<String, HashSet<SocketIOClient>> mapRooms = new HashMap<String, HashSet<SocketIOClient>>();
+    private HashMap<SocketIOClient, String> mapClientRoom = new HashMap<SocketIOClient, String>();
 
     public static void main(String[] args) throws InterruptedException {
         Multiple2RoomChatLauncher launcher = new Multiple2RoomChatLauncher();
@@ -63,43 +63,67 @@ public class Multiple2RoomChatLauncher {
                 System.out.println();
             }
         });
-// room-change yi ben oluşturdum namespaceleri örnek alarak ama tam olmadılar galiba
-        final SocketIONamespace chat1namespace = server.addNamespace("/digerleri");
-        server.addEventListener("room-change", ChatRoomObject.class, new DataListener<ChatRoomObject>() {
-            @Override
-            public void onData(SocketIOClient client, ChatRoomObject data, AckRequest ackRequest) {
-                chat1namespace.getBroadcastOperations().sendEvent("room-change", data);
-            }
-        });
-        final SocketIONamespace chat2namespace = server.addNamespace("/stajyerler");
-        server.addEventListener("room-change", ChatRoomObject.class, new DataListener<ChatRoomObject>() {
-            @Override
-            public void onData(SocketIOClient client, ChatRoomObject data, AckRequest ackRequest) {
-                chat1namespace.getBroadcastOperations().sendEvent("room-change", data);
-            }
-        });
 
+        server.addEventListener("roomChange", RoomChange.class, new DataListener<RoomChange>() {
+            @Override
+            public void onData(SocketIOClient client, RoomChange roomChange, AckRequest ackRequest) throws Exception {
+                String activeRoom = mapClientRoom.get(client);
+                System.out.println(roomChange.getUserName() + ": activeRoom = " + activeRoom);
+                System.out.println(roomChange.getUserName() + ": new room = " + roomChange.getRoom());
+                // User'ı şu anda bulunduğu odadan çıkartacağız ?????? hiç anlamadım
+                mapClientRoom.remove(client);
+                // User'ı room change data'sındaki odaya dahil edeceğiz
+                mapClientRoom.put(client, roomChange.getRoom());
+
+                // Önceden olduğu odadan kişiyi/client'ı çıkartma
+                HashSet<SocketIOClient> socketIOClients = null;
+                if (activeRoom != null) {
+                    socketIOClients = mapRooms.get(activeRoom);
+                    if (socketIOClients != null) {
+                        socketIOClients.remove(client);
+                    }
+                }
+
+                // Yeni odaya ilgili kişiyi/client'ı ekle
+                String roomNew = roomChange.getRoom();
+                socketIOClients = mapRooms.get(roomNew);
+                // Liste hiç yoksa yeni liste yarat
+                if (socketIOClients == null) {
+                    socketIOClients = new HashSet<SocketIOClient>();
+                    mapRooms.put(roomNew, socketIOClients);
+                }
+                socketIOClients.add(client);
+
+/*
+Oda değişikliğini diğer üyelere haber verme
+                RoomChange change = new RoomChange(roomChange.getRoom());
+                for (SocketIOClient c : socketIOClients) {
+                    if (!client.equals(c))
+                        c.sendEvent("roomChange", change);
+                }
+*/
+            }
+
+        });
 
         server.addEventListener("chatevent", ChatRoomObject.class, new DataListener<ChatRoomObject>() {
             @Override
             public void onData(SocketIOClient client, ChatRoomObject data, AckRequest ackRequest) {
                 // broadcast messages to all clients - tüm istemcilere mesaj yayınla
-                server.getBroadcastOperations().sendEvent("chatevent", data);
                 String room = data.getRoom();
                 System.out.println("data.getRoom() = " + room);
-                if (room != null)
+                // if (room != null)
                 {
-                    HashSet<SocketIOClient> socketIOClients = rooms.get(room);
-                    if (socketIOClients == null) {
-                        socketIOClients = new HashSet<SocketIOClient>();
-                        rooms.put(room, socketIOClients);
-                    }
-                    socketIOClients.add(client);
-                    System.out.println();
-                    ChatRoomObject single = new ChatRoomObject(data.getUserName(), "[" + room + "] " + data.getMessage() + " - - ");
-                    for (SocketIOClient c : socketIOClients) {
-                        if (!client.equals(c))
-                            c.sendEvent("chatevent", single);
+                    // server.getBroadcastOperations().sendEvent("chatevent", data);
+
+                    HashSet<SocketIOClient> socketIOClients = mapRooms.get(room);
+                    if (socketIOClients != null)
+                    {
+                        ChatRoomObject single = new ChatRoomObject(data.getUserName(), data.getMessage());
+                        for (SocketIOClient c : socketIOClients) {
+                            if (!client.equals(c))
+                                c.sendEvent("chatevent", single);
+                        }
                     }
                 }
 
