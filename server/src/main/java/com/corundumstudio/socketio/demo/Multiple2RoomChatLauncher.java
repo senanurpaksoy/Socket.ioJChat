@@ -70,7 +70,7 @@ public class Multiple2RoomChatLauncher {
                 String activeRoom = mapClientRoom.get(client);
                 System.out.println(roomChange.getUserName() + ": activeRoom = " + activeRoom);
                 System.out.println(roomChange.getUserName() + ": new room = " + roomChange.getRoom());
-                // User'ı şu anda bulunduğu odadan çıkartacağız ?????? hiç anlamadım
+                // User'ı şu anda bulunduğu odadan çıkartacağız
                 mapClientRoom.remove(client);
                 // User'ı room change data'sındaki odaya dahil edeceğiz
                 mapClientRoom.put(client, roomChange.getRoom());
@@ -95,7 +95,7 @@ public class Multiple2RoomChatLauncher {
                 socketIOClients.add(client);
 
 /*
-Oda değişikliğini diğer üyelere haber verme
+                Oda değişikliğini diğer üyelere haber verme
                 RoomChange change = new RoomChange(roomChange.getRoom());
                 for (SocketIOClient c : socketIOClients) {
                     if (!client.equals(c))
@@ -117,8 +117,7 @@ Oda değişikliğini diğer üyelere haber verme
                     // server.getBroadcastOperations().sendEvent("chatevent", data);
 
                     HashSet<SocketIOClient> socketIOClients = mapRooms.get(room);
-                    if (socketIOClients != null)
-                    {
+                    if (socketIOClients != null) {
                         ChatRoomObject single = new ChatRoomObject(data.getUserName(), data.getMessage());
                         for (SocketIOClient c : socketIOClients) {
                             if (!client.equals(c))
