@@ -18,7 +18,7 @@ public class Multiple2RoomChatLauncher {
         Multiple2RoomChatLauncher launcher = new Multiple2RoomChatLauncher();
         launcher.start();
     }
-    /*Berfin Burayı yazdı*/
+    
     private void start() throws InterruptedException {
         Configuration config = new Configuration();
         config.setHostname("localhost");//192.168.254.105
